@@ -15,8 +15,8 @@ The following variables are used to tweak some of the configuration pieces for u
   ;;       in Emacs and init.el will be generated automatically!
 
   ;; You will most likely need to adjust this font size for your system!
-  (defvar efs/default-font-size 180)
-  (defvar efs/default-variable-font-size 180)
+  (defvar efs/default-font-size 120)
+  (defvar efs/default-variable-font-size 120)
 
   ;; Make frame transparency overridable
   (defvar efs/frame-transparency '(90 . 90))
@@ -51,6 +51,9 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 
 #+begin_src emacs-lisp
 
+  ;; Temporarily disable key check
+  (setq package-check-signature nil)
+
   ;; Initialize package sources
   (require 'package)
 
@@ -81,7 +84,7 @@ You can also use =M-x auto-package-update-now= to update right now!
 
   (use-package auto-package-update
     :custom
-    (auto-package-update-interval 7)
+    (auto-package-update-interval 1)
     (auto-package-update-prompt-before-update t)
     (auto-package-update-hide-results t)
     :config
@@ -191,7 +194,8 @@ This configuration uses [[https://evil.readthedocs.io/en/latest/index.html][evil
     (setq evil-want-C-u-scroll t)
     (setq evil-want-C-i-jump nil)
     :config
-    (evil-mode 1)
+    ;; Default to evil mode not enabled 
+    (evil-mode 0)
     (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
     (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
 
@@ -728,6 +732,32 @@ Try these commands with =M-x=:
 
 #+end_src
 
+*** C/C++
+
+This is the configuration for the C/C++ language. It aims to conform to the guidelines defined by my current employer Renesas Electronics.
+
+#+begin_src emacs-lisp
+
+  (setq c-default-style "k&r"
+        c-basic-offset 4)
+
+  (setq-default tab-width 4)
+
+  (setq-default indent-tabs-mode nil)
+#+end_src
+
+Source code formatting is applied by the astyle package. Has been disabled for now to avoid changing format of existing files if not intended. Set :disabled to f or remove to re-enable. 
+
+#+begin_src emacs-lisp
+
+  (use-package astyle
+    :ensure t
+    :disabled t
+    :when (executable-find "astyle")
+    :hook (c-mode-common . astyle-on-save-mode))
+
+#+end_src
+  
 *** TypeScript
 
 This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
@@ -754,13 +784,26 @@ This will install the [[https://github.com/theia-ide/typescript-language-server]
 
 *** Python
 
-We use =lsp-mode= and =dap-mode= to provide a more complete development environment for Python in Emacs.  Check out [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pyls/][the =pyls= configuration]] in the =lsp-mode= documentation for more details.
+Python files frequently contain uppercase UTF-8 coding format specifiers but Python only recognises lower case so
+define an alias to avoid annoying warnings on save.
 
-Make sure you have the =pyls= language server installed before trying =lsp-mode=!
+#+begin_src emacs-lisp
+  (prefer-coding-system 'utf-8)
+  (setq coding-system-for-read 'utf-8)
+  (setq coding-system-for-write 'utf-8)
+  ;;(set-language-environment "UTF-8")
+  ;;(set-default-coding-system 'utf-8)
+  ;;(define-coding-system-alias 'UTF-8 'utf-8)
+
+#+end_src
+
+  We use =lsp-mode= and =dap-mode= to provide a more complete development environment for Python in Emacs.  Check out [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pyls/][the =pyls= configuration]] in the =lsp-mode= documentation for more details.
+
+  Make sure you have the =pyls= language server installed before trying =lsp-mode=!
 
 #+begin_src sh :tangle no
 
-pip install --user "python-language-server[all]"
+  pip install --user "python-language-server[all]"
 
 #+end_src
 
@@ -773,8 +816,8 @@ There are a number of other language servers for Python so if you find that =pyl
     :hook (python-mode . lsp-deferred)
     :custom
     ;; NOTE: Set these if Python 3 is called "python3" on your system!
-    ;; (python-shell-interpreter "python3")
-    ;; (dap-python-executable "python3")
+    (python-shell-interpreter "C:/Users/a5128641/AppData/Local/Programs/Python/Python37/python")
+    (dap-python-executable "python3")
     (dap-python-debugger 'debugpy)
     :config
     (require 'dap-python))
