@@ -3,12 +3,6 @@
 
 * Welcome!
 
-This is the configuration we've been building in the *Emacs From Scratch* series, now written as an Org Mode document.  This file generates [[file:init.el][init.el]] which can be loaded by Emacs at startup.
-
-*NOTE:* If you run into any issues while using this configuration, please [[https://github.com/daviwil/emacs-from-scratch/issues/new][file an issue]] or send me an email at =david at systemcrafters.cc=.
-
-The following variables are used to tweak some of the configuration pieces for use in the live streams so you might need to adjust them for your local machine if you try to use this configuration directly.
-
 #+begin_src emacs-lisp
 
   ;; NOTE: init.el is now generated from Emacs.org.  Please edit that file
@@ -22,10 +16,6 @@ The following variables are used to tweak some of the configuration pieces for u
   (defvar efs/frame-transparency '(90 . 90))
 
 #+end_src
-
-* Tips for Use
-
-In this document I've added links in many places that lead you to documentation for the various packages we use.  If you're looking at this file in Emacs, you can put your cursor on a link and press =C-c C-o= or run =M-x org-open-at-point= to open the link in your web browser.
 
 * Startup Performance
 
@@ -74,6 +64,8 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 
 #+end_src
 
+Note: Need to take steps here to avoid annoying warning https://emacs.stackexchange.com/questions/70081/how-to-deal-with-this-message-important-please-install-org-from-gnu-elpa-as-o
+
 ** Automatic Package Updates
 
 The auto-package-update package helps us keep our Emacs packages up to date!  It will prompt you after a certain number of days either at startup or at a specific time of day to remind you to update your packages.
@@ -84,7 +76,7 @@ You can also use =M-x auto-package-update-now= to update right now!
 
   (use-package auto-package-update
     :custom
-    (auto-package-update-interval 1)
+    (auto-package-update-interval 5)
     (auto-package-update-prompt-before-update t)
     (auto-package-update-hide-results t)
     :config
@@ -165,6 +157,25 @@ I am using the [[https://github.com/tonsky/FiraCode][Fira Code]] and [[https://f
 
 #+end_src
 
+** Org roam
+
+#+begin_src emacs-lisp
+
+(use-package org-roam
+      :hook 
+      (after-init . org-roam-mode)
+      :custom
+      (org-roam-directory "/path/to/org-files/")
+      :bind (:map org-roam-mode-map
+              (("C-c n l" . org-roam)
+               ("C-c n f" . org-roam-find-file)
+               ("C-c n b" . org-roam-switch-to-buffer)
+               ("C-c n g" . org-roam-graph-show))
+              :map org-mode-map
+              (("C-c n i" . org-roam-insert))))
+
+#+end_src              
+              
 * Keybinding Configuration
 
 This configuration uses [[https://evil.readthedocs.io/en/latest/index.html][evil-mode]] for a Vi-like modal editing experience.  [[https://github.com/noctuid/general.el][general.el]] is used for easy keybinding configuration that integrates well with which-key.  [[https://github.com/emacs-evil/evil-collection][evil-collection]] is used to automatically configure various Emacs modes with Vi-like keybindings for evil-mode.
@@ -241,7 +252,7 @@ This configuration uses [[https://evil.readthedocs.io/en/latest/index.html][evil
 
 [[https://github.com/seagle0128/doom-modeline][doom-modeline]] is a very attractive and rich (yet still minimal) mode line configuration for Emacs.  The default configuration is quite good but you can check out the [[https://github.com/seagle0128/doom-modeline#customize][configuration options]] for more things you can enable or disable.
 
-*NOTE:* The first time you load your configuration on a new machine, you'll need to run `M-x all-the-icons-install-fonts` so that mode line icons display correctly.
+*NOTE:* The first time you load your configuration on a new machine, you'll need to run `M-x all-the-icons-install-fonts` so that mode line icons display correctly. Have been installed to ~/appData/Roaming (default choice).
 
 #+begin_src emacs-lisp
 
@@ -566,13 +577,13 @@ We use [[https://github.com/joostkremers/visual-fill-column][visual-fill-column]
 
 #+begin_src emacs-lisp
 
-  (defun efs/org-mode-visual-fill ()
-    (setq visual-fill-column-width 100
-          visual-fill-column-center-text t)
-    (visual-fill-column-mode 1))
+  ;; (defun efs/org-mode-visual-fill ()
+  ;;   (setq visual-fill-column-width 100
+  ;;         visual-fill-column-center-text t)
+  ;;   (visual-fill-column-mode 1))
 
-  (use-package visual-fill-column
-    :hook (org-mode . efs/org-mode-visual-fill))
+  ;; (use-package visual-fill-column
+  ;;   :hook (org-mode . efs/org-mode-visual-fill))
 
 #+end_src
 
@@ -658,6 +669,9 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 
 #+end_src
 
+Flymake is used as a backend so do M-x flymake-start.
+Then before lsp-mode can be used it is necessary to M-x lsp
+
 **** lsp-ui
 
 [[https://emacs-lsp.github.io/lsp-ui/][lsp-ui]] is a set of UI enhancements built on top of =lsp-mode= which make Emacs feel even more like an IDE.  Check out the screenshots on the =lsp-ui= homepage (linked at the beginning of this paragraph) to see examples of what it can do.
@@ -706,6 +720,44 @@ Try these commands with =M-x=:
 
 #+end_src
 
+*** Non LSP source navigation
+
+**** ctags
+
+Note: If LSP mode no tags may be necessary.
+
+If ctags are enabled it is usually better to disable the annoying pop-up every time there is a directory change
+
+#+begin_src emacs-lisp
+
+(setq tags-add-tables nil)
+
+#+end_src
+
+*** Snippets
+
+Templated C source blocks
+
+#+begin_src emacs-lisp
+
+(use-package yasnippet                  ; Snippets
+  :ensure t
+  :config
+  (setq
+   yas-verbosity 1                      ; No need to be so verbose
+   yas-wrap-around-region t)
+
+  (with-eval-after-load 'yasnippet
+    (setq yas-snippet-dirs '(yasnippet-snippets-dir)))
+
+  (yas-reload-all)
+  (yas-global-mode))
+
+(use-package yasnippet-snippets         ; Collection of snippets
+  :ensure t)
+
+#+end_src
+  
 *** Debugging with dap-mode
 
 [[https://emacs-lsp.github.io/dap-mode/][dap-mode]] is an excellent package for bringing rich debugging capabilities to Emacs via the [[https://microsoft.github.io/debug-adapter-protocol/][Debug Adapter Protocol]].  You should check out the [[https://emacs-lsp.github.io/dap-mode/page/configuration/][configuration docs]] to learn how to configure the debugger for your language.  Also make sure to check out the documentation for the debug adapter to see what configuration parameters are available to use for your debug templates!
@@ -746,7 +798,7 @@ This is the configuration for the C/C++ language. It aims to conform to the guid
   (setq-default indent-tabs-mode nil)
 #+end_src
 
-Source code formatting is applied by the astyle package. Has been disabled for now to avoid changing format of existing files if not intended. Set :disabled to f or remove to re-enable. 
+Source code formatting is applied by the astyle package. Has been disabled for now to avoid changing format of existing files if not intended. Set :disabled to f to re-enable. 
 
 #+begin_src emacs-lisp
 
@@ -816,12 +868,45 @@ There are a number of other language servers for Python so if you find that =pyl
     :hook (python-mode . lsp-deferred)
     :custom
     ;; NOTE: Set these if Python 3 is called "python3" on your system!
-    (python-shell-interpreter "C:/Users/a5128641/AppData/Local/Programs/Python/Python37/python")
-    (dap-python-executable "python3")
-    (dap-python-debugger 'debugpy)
+    ;;(python-shell-interpreter "python3")
+    ;;(dap-python-executable "python3")
+    ;;(dap-python-debugger 'debugpy)
     :config
     (require 'dap-python))
 
+
+#+end_src
+
+Series of highly recommended packages for Python IDE (ref https://github.com/wyuenho/emacs-pet) 
+
+#+begin_src emacs-lisp
+
+(use-package exec-path-from-shell
+  :if (memq (window-system) '(mac ns))
+  :config (exec-path-from-shell-initialize))
+  
+  (use-package flycheck)
+
+  (use-package lsp)
+
+  (use-package lsp-jedi
+    :after lsp)
+
+  (use-package lsp-pyright
+    :after lsp)
+
+  (use-package dap-python
+    :after lsp)
+
+  (use-package eglot)
+
+  (use-package python-pytest)
+
+  (use-package python-black)
+
+  (use-package python-isort)
+
+  (use-package ruff-format)
 
 #+end_src
 
@@ -836,6 +921,15 @@ You can use the pyvenv package to use =virtualenv= environments in Emacs.  The =
 
 #+end_src
 
+Suggestion is pet will make use of virtual environments more strightforward. Currently experimental.
+
+#+begin_src emacs-lisp
+
+  ;; (use-package pet
+  ;;   :config
+  ;;   (add-hook 'python-base-mode-hook 'pet-mode -10))
+#+end_src
+  
 ** Company Mode
 
 [[http://company-mode.github.io/][Company Mode]] provides a nicer in-buffer completion interface than =completion-at-point= which is more reminiscent of what you would expect from an IDE.  We add a simple configuration to make the keybindings a little more useful (=TAB= now completes the selection and initiates completion at the current location if needed).
@@ -870,19 +964,26 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
     :diminish projectile-mode
     :config (projectile-mode)
     :custom ((projectile-completion-system 'ivy))
+    :custom ((projectile-enable-caching t))
+    :custom ((projectile-indexing-method 'alien))
     :bind-keymap
     ("C-c p" . projectile-command-map)
     :init
     ;; NOTE: Set this to the folder where you keep your Git repos!
-    (when (file-directory-p "~/Projects/Code")
-      (setq projectile-project-search-path '("~/Projects/Code")))
+    (when (file-directory-p "c:/Users/a528641/repo")
+      (setq projectile-project-search-path '("c:/Users/a528641/repo")))
     (setq projectile-switch-project-action #'projectile-dired))
 
   (use-package counsel-projectile
     :after projectile
     :config (counsel-projectile-mode))
 
+  (use-package treemacs-projectile
+    :after projectile)
+
 #+end_src
+
+After startup need to run M-x treemacs-select-window (should be bound to M-0?)
 
 ** Magit
 
@@ -1001,8 +1102,8 @@ One advantage of =shell-mode= on Windows is that it's the only way to run =cmd.e
 #+begin_src emacs-lisp
 
   (when (eq system-type 'windows-nt)
-    (setq explicit-shell-file-name "powershell.exe")
-    (setq explicit-powershell.exe-args '()))
+    (setq explicit-shell-file-name "cmdproxy.exe"))
+    ;;(setq explicit-powershell.exe-args '()))
 
 #+end_src
 
@@ -1157,6 +1258,22 @@ Dired is a built-in file manager for Emacs that does some pretty amazing things!
     :config
     (evil-collection-define-key 'normal 'dired-mode-map
       "H" 'dired-hide-dotfiles-mode))
+
+#+end_src
+
+* Remote File Access
+
+** Tramp
+
+#+begin_src emacs-lisp
+
+  (use-package tramp
+    :config
+    (setq tramp-default-user "rmunro"
+          tramp-default-host "slsrvjslv-02"
+          tramp-default-method "plink")
+    (setq default-buffer-file-coding-system 'utf-8-unix)
+  )
 
 #+end_src
 
